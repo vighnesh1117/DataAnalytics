@@ -1,0 +1,189 @@
+#DELAY GRAPHS
+
+data <-read_csv('new.csv')
+summary(data)
+
+data$WeekDay <- data$dayweek
+
+data$MonthQual <- data$daymonth
+
+
+data$WeekDay[data$WeekDay == 1] = 'Monday'
+data$WeekDay[data$WeekDay == 2] = 'Tuesday'
+data$WeekDay[data$WeekDay == 3] = 'Wednesday'
+data$WeekDay[data$WeekDay == 4] = 'Thursday'
+data$WeekDay[data$WeekDay == 5] = 'Friday'
+data$WeekDay[data$WeekDay == 6] = 'Saturday'
+data$WeekDay[data$WeekDay == 7] = 'Sunday'
+
+data$MonthQual[data$MonthQual == 1] = 'January'
+data$MonthQual[data$MonthQual == 2] = 'February'
+data$MonthQual[data$MonthQual == 3] = 'March'
+data$MonthQual[data$MonthQual == 4] = 'April'
+data$MonthQual[data$MonthQual == 5] = 'May'
+data$MonthQual[data$MonthQual == 6] = 'June'
+data$MonthQual[data$MonthQual == 7] = 'July'
+data$MonthQual[data$MonthQual == 8] = 'August'
+data$MonthQual[data$MonthQual == 9] = 'September'
+data$MonthQual[data$MonthQual == 10] = 'October'
+data$MonthQual[data$MonthQual == 11] = 'November'
+data$MonthQual[data$MonthQual == 12] = 'December'
+
+data %>% group_by(WeekDay) %>% 
+tally %>% arrange(desc(n))
+
+The most common day for flight delays is on friday, which isn't surprising as it's also one of the most common days to fly.
+====
+data %>% group_by(MonthQual) %>% 
+tally %>% arrange(desc(n))
+
+flight$delay=recode(flight$delay,"'delayed'=1;else=0")
+flight$delay=as.numeric(levels(flight$delay)[flight$delay])
+table(flight$delay)
+      
+	  
+data$delay[data$delay == 0] = 'No'
+data$delay[data$delay == 1] = 'Yes'
+
+qplot(factor(delay), data=data, geom="bar", fill=factor(delay))
+====
+data %>% group_by(delay) %>%
+tally %>% arrange(desc(n))
+===
+
+2ND SOLUTION:
+
+library(readr)
+library(ggplot2)
+data$Month <- as.factor(data$daymonth)
+ggplot(data, aes(x=daymonth, fill=daymonth))+geom_bar()
+ggplot(data, aes(x=dayweek, fill=dayweek))+geom_bar()
+
+
+library(reshape2) 	
+toPlot<- aggregate(data$DEPARTURE_DELAY, by=list(data$origin), FUN=sum)
+names(toPlot)<-c("Airport", "origin")
+toPlot2<- aggregate(data$DEPARTURE_DELAY, by=list(data$dest), FUN=sum)
+names(toPlot2)<-c("Airport", "dest")
+toPlot<-melt(merge(toPlot, toPlot2))
+toPlot$Airport <- factor(toPlot$Airport, levels=unique(toPlot$Airport[order(toPlot$value)]))
+ggplot(toPlot, aes(x=Airport, y=value, colour = variable))+geom_point(alpha=0.5, size=0.3)+scale_y_log10()+ggtitle("Cumulated delay time per airport")
+#=====
+
+#3RD SOLUTION:Arrival Delay Analysis
+Flights.data  = read.table('new.csv', sep =",", header = TRUE)
+flights.delay.sub.new <- Flights.data[,c('YEAR','MONTH','DAY','dayweek','carrier','origin','dest','DEPARTURE_DELAY','ARRIVAL_DELAY')]
+head(flights.delay.sub.new)
+
+flights.delay.sub <- Flights.data[,c('YEAR','MONTH','DAY','dayweek','carrier','origin','dest','SCHEDULED_DEPARTURE','SCHEDULED_ARRIVAL','DEPARTURE_DELAY','ARRIVAL_DELAY')]
+flights.delay.sub <- flights.delay.sub[complete.cases(flights.delay.sub), ]
+flights.delay.sub.orig.dca.dest.jfk <- flights.delay.sub[ which(flights.delay.sub$origin=='DCA' & flights.delay.sub$dest=='JFK'), ]
+
+flights.delay.sub.new <- flights.delay.sub.new[complete.cases(flights.delay.sub.new), ]
+flights.delay.sub.orig.dca.dest.jfk <- flights.delay.sub.new[ which(flights.delay.sub.new$origin=='DCA' & flights.delay.sub.new$dest=='JFK'), ]
+numcols <- c('DEPARTURE_DELAY','ARRIVAL_DELAY')
+
+#Generating DATE column derived from YEAR, MONTH and DAY
+
+flights.delay.sub.orig.dca.dest.jfk$date <- as.Date(paste(flights.delay.sub.orig.dca.dest.jfk$YEAR, flights.delay.sub.orig.dca.dest.jfk$MONTH,flights.delay.sub.orig.dca.dest.jfk$DAY , sep = "."),  format = "%Y.%m.%d")
+
+head(flights.delay.sub.orig.dca.dest.jfk)
+summary(flights.delay.sub.orig.dca.dest.jfk)
+str(flights.delay.sub.orig.dca.dest.jfk)
+
+#Lets look into the density of Arrival Delays
+library(ggplot2)
+ggplot(flights.delay.sub.orig.dca.dest.jfk, aes(ARRIVAL_DELAY)) + geom_density() + xlab('Arrival Delay in minutes') + ylab('Density of Arrival Delay') + ggtitle('Density charr arrival delay by Airline for 2015 flights from DCA to JFK')
+
+#Above density chart shows me that most of the flights either reach before time or on-time. But, there are delays. Now lets check which airlines are delayed the most.
+
+options(repr.plot.width=12, repr.plot.height=8)
+ggplot(flights.delay.sub.orig.dca.dest.jfk, aes(x = factor(carrier), y = ARRIVAL_DELAY)) + geom_boxplot() + ylab('Arrival Delay in minutes') + xlab('Airline Abbreviations') + ggtitle('Arrival delay by Airline for 2015 flights from DCA to JFK')
+
+#Relationship between departure delay and arrival delay with airline/carrier shown:
+ggplot(flights.delay.sub.orig.dca.dest.jfk, aes(DEPARTURE_DELAY, ARRIVAL_DELAY)) + geom_point(aes(color = factor(carrier),size  = ARRIVAL_DELAY, alpha = 0.5)) + xlab('Departure delay in minutes') + ylab('Arrival delay in minutes') + ggtitle('Relationship between Departure delay and Arrival delay with Carrier shown')
+
+#Scatter plot above provides view of density as well as distribution of departure versus arrival delay, proving the hypothesis that most of the arrival delays occurs due departure delay when flying from DCA to JFK based on data from 2015.
+
+ggplot(flights.delay.sub.orig.dca.dest.jfk, aes(dayweek, ARRIVAL_DELAY)) + geom_point(aes(color = factor(carrier), shape = factor(carrier),size  = ARRIVAL_DELAY, alpha = 0.5)) + xlab('Day of week in numbers (MON=1...SUN=7)') + ylab('Arrival delay in minutes') + ggtitle('Relationship between Departure delay and Arrival delay with carrier shown')
+
+#Based on above plot, least amount of delay's happen on Tuesday's, Wednesday's, thursday's and Saturday's while there is a changes flight being delayed on Monday's, Friday's and Sunday's if you fly from DCA to JFK based on 2015 Flights data.
+Conclusion of Exploratory Analysis
+
+1. Departure delay has significant impact on Arrival delay.
+
+2. DH and DL are least reliable and MQ airlines is most reliable in terms of arrival delay.
+
+===
+#Time Series Analysis
+require(repr)
+require(forecast)
+
+dist.ts = function(df, col = 'residual', bins = 40)
+{
+  par(mfrow = c(1,2))
+  temp = as.vector(df)
+  breaks = seq(min(temp), max(temp), length.out = (bins + 1))
+  hist(temp, breaks = breaks, main = paste('Distribution of ', col), xlab = col)
+  qqnorm(temp, main = paste('Normal Q-Q plot of ', col))
+  par(mfrow = c(1,1))
+}
+
+plot.acf <- function(df, col = 'remainder', is.df =TRUE)
+{
+  if(is.df) temp <- df[, col]
+  else temp <- df
+  par(mfrow = c(2,1))
+  acf(temp, main = paste('ACF of', col))
+  pacf(temp, main = paste('PACF of', col))
+  par(mfrow = c(1,1))
+}
+      
+ts.decomp <- function(df, col = 'elec.ts', span = 0.5, Mult = TRUE, is.df = TRUE)
+{
+  # if(Mult) temp = log(df[, col])  else temp = ts(df[, col]
+  if(is.df) temp = log(df[, col])  
+  else temp = df
+  spans = span * length(temp)  
+  fit <- stl(temp, s.window = "periodic", t.window = spans)
+  plot(fit, main = paste('Decompositon of',col,'with loess span = ', as.character(span)))
+  fit$time.series
+}
+
+ts.model = function(ts, col = 'remainder', order = c(0,0,1))
+{
+  mod = arima(ts, order = order, include.mean = FALSE)
+  print(mod)
+  mod
+}
+
+library(plyr)
+flights.arrival_delay.daily.avg <- ddply(flights.delay.sub.orig.dca.dest.jfk,~date,summarise,AVG_ARRIVAL_DELAY=mean(ARRIVAL_DELAY))
+
+head(flights.arrival_delay.daily.avg)
+summary(flights.arrival_delay.daily.avg)
+str(flights.arrival_delay.daily.avg)
+
+arrival_delay.ts <- ts(flights.arrival_delay.daily.avg[,2], start = 2015, freq = 334)
+str(arrival_delay.ts)
+
+options(repr.pmales.extlot.width=8, repr.plot.height=4)
+dist.ts(arrival_delay.ts, col = 'Arrival Delay')
+
+options(repr.pmales.extlot.width=8, repr.plot.height=6)
+plot.acf(arrival_delay.ts, col = 'Arrival Delay', is.df = F)
+
+options(repr.pmales.extlot.width=8, repr.plot.height=4)
+plot(arrival_delay.ts, main = 'Arrival Delay')
+
+#The series shows significant deviations from the zero, and a bit drift from zero. However, JAN, FEB, MAR months seems to have less amount of delays in comparision to rest of the year.
+
+#Fit a model for forecasting using the forecast package
+fit.arrival_delay = auto.arima(arrival_delay.ts, max.p=3, max.q=3, max.P=2, max.Q=2, max.order=5, max.d=2, max.D=1,start.p=0, start.q=0, start.P=0, start.Q=0)
+summary(fit.arrival_delay)
+
+arrival_delay.forecast = forecast(fit.arrival_delay, h=31)
+summary(arrival_delay.forecast)
+plot(arrival_delay.forecast)
+
+1. There is no visible periodicity in this data.

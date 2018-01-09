@@ -1,0 +1,754 @@
+flight = read.csv("C:/Users/vsawa/Desktop/FinalData.csv",header = TRUE)
+
+
+
+SCHEDULED_DEPARTURE=flight$SCHEDULED_DEPARTURE
+carrier=flight$carrier
+DEPARTURE_TIME=flight$DEPARTURE_TIME
+dest=flight$dest
+distance=flight$distance
+DATE =flight$DATE
+flightnumb=flight$flightnumb
+origin=flight$origin
+weather=flight$weather
+dayweek=flight$dayweek
+daymonth=flight$daymonth
+tailnu=flight$tailnu
+delay=flight$delay
+delaytimeweathergood=flight$delaytimeweathergood
+delaytimeweatherbad=flight$delaytimeweatherbad
+DEPARTURE_DELAY=flight$DEPARTURE_DELAY
+SCHEDULED_TIME=flight$SCHEDULED_TIME
+ELAPSED_TIME=flight$ELAPSED_TIME
+AIR_TIME=flight$AIR_TIME
+SCHEDULED_ARRIVAL=flight$SCHEDULED_ARRIVAL
+ARRIVAL_TIME=flight$ARRIVAL_TIME
+ARRIVAL_DELAY=flight$ARRIVAL_DELAY
+delaytimeweatherbad=flight$delaytimeweatherbad
+delaytimeweathergood=flight$delaytimeweathergood
+YEAR=flight$YEAR
+MONTH=flight$MONTH
+DAY=flight$DAY
+
+
+
+##computes log returns
+rt=log(flight[,18]+1)
+
+
+
+
+##create time series variable
+arr=zoo(flight[,18],as.Date(as.character(flight[,25]),format = "%m/%d/%Y"))
+
+##
+start(arr)
+##
+end(arr)
+
+
+
+##computeslog returns
+rts=log(arr+1)
+
+##retrives dates only
+time(rts)
+
+
+##computesummarystats
+basicStats(rt)
+basicStats(rts)
+
+
+##create histogram
+par(mfcol=c(2,2))
+hist(rts, xlab="ARRIVAL_TIME",prob=TRUE,main="Histogram")
+
+xfit<-seq(min(rt),max(rt),length=40)
+yfit<-dnorm(xfit,mean=mean(rt),sd=sd(rt))
+lines(xfit, yfit, col="blue", lwd=2) 
+
+
+##createQQplot
+qqnorm(rt)
+qqline(rt, col = 2)
+
+
+# simple plot where x-axis is not labeled with time
+plot(rt)
+# use time series object rts to draw time plot indexed with time
+plot(rts)
+
+
+rts_03 = window(rts, start = as.Date("2003-01-01"),
+end = as.Date("2003-12-31"))
+# plot the subset of data
+plot(rts_03, type='l', ylab="log returns", main="Plot
+of 2003 data")
+
+
+
+# Perform Shapiro-Wilk test (up to 5000 observations)
+shapiro.test(rt)
+# Perform Jarque-Bera test (for larger observations)
+jarque.bera.test(rt)
+
+
+#9 COMPUTE ACF AND PLOT CORRELOGRAM
+#prints acf to console
+acf(rt, plot=F)
+#plots acf (correlogram)
+acf(rt, PLOT=T)
+
+
+#9 COMPUTE ACF AND PLOT CORRELOGRAM
+#plots acf up to a specific lag
+acf(rt, plot=T, lag.max=15, na.action=na.pass)
+
+
+#10 COMPUTE LJUNG-BOX TEST FOR WHITE NOISE
+# to Lag 6
+Box.test(rt,lag=6,type='Ljung')
+# to Lag 12
+Box.test(rt,lag=12,type='Ljung')
+
+# CREATE TIME SERIES OBJECT
+flight1=flight[,18] 
+ gts = ts(flight1, start=c(1991,1), freq=4)
+ plot(gts, xlab="time", ylab="Arrival_time")
+ 
+
+##plottingtimeseriesplot
+plot(arr)
+
+
+--------------------------------------------
+
+ARIMA
+AR model
+#create time series object
+# Use function ts()
+arr = ts(flight[,18], start=c(1991,5), freq=12)
+
+# compute returns as (djuts_(t)-djuts_(t-1))/djuts_(t-1).
+ratechg = diff(arr)
+
+
+#4 COMPUTE SUMMARY STATISTICS
+basicStats(ratechg)
+
+
+#5 CREATE HISTOGRAM and/or QQ Plot
+# creates 2 by 2 display for 4 plots
+hist(ratechg, xlab="ARRIVAL_TIME", prob=TRUE, main="Histogram")
+# add approximating normal density curve
+xfit<-seq(min(ratechg),max(ratechg),length=40)
+yfit<-dnorm(xfit,mean=mean(ratechg),sd=sd(ratechg))
+lines(xfit, yfit, col="red", lwd=2)
+
+
+#6 CREATE NORMAL PROBABILITY PLOT
+qqnorm(ratechg)
+qqline(coredata(ratechg), col = 2)
+
+
+# 7. NORMALITY TESTS
+# Perform Jarque-Bera normality test.
+normalTest(ratechg,method=c("jb"))
+
+
+#8 CREATE TIME PLOT
+plot(ratechg, ylab='ARRIVAL_TIME_CHANGE')
+
+#9 COMPUTE ACF, PACF AND PLOT CORRELOGRAM
+#prints acf to console
+acf_value=acf(coredata(ratechg), plot=F, lag=20)
+#plots acf (correlogram)
+acf(coredata(ratechg), plot=T, lag=20)
+
+
+# plots pacf values up to lag 15.
+pacf(coredata(ratechg), lag = 15)
+
+
+#10 COMPUTE LJUNG-BOX TEST FOR WHITE NOISE (NO AUTOCORRELATION)
+# to Lag 6
+Box.test(coredata(ratechg),lag=6,type='Ljung')
+# to Lag 12
+Box.test(coredata(ratechg),lag=12,type='Ljung')
+
+
+FIT AR(p) model
+OPTION 1:
+Fit AR model and select the order automatically using AIC criterion
+#11 Model fitting by automatically identify the value of the p
+m1=ar(ratechg, method="mle")
+to print internal variables computed for AR model m1
+names(m1)
+Residual analysis: residual plot
+plot(m1$resid, type='l')
+Test if residuals are white noise using the Ljung-Box test
+Box.test(m1$resid, lag=10, type='Ljung')
+
+
+OPTION 2:
+Fit AR(p) model of given order p = 2
+m2=arima(ratechg, order = c(2,0,0))
+m2 #to print summary of model
+tsdiag(m2) #tsdiag (m2) creates residual plots.
+
+#11 Model fitting by manually identify value of p
+m2=arima(ratechg, c(2,0,0)) # fit a AR(2) model
+m2 #print the model
+
+
+
+#12 COMPUTE RESIDUAL ANALYSIS
+#print internal variables computed for ARIMA model m2
+names(m2)
+# residuals are saved in the "residuals" variable and can be retrieved using
+# m2$residuals syntax.
+plot(m2$residuals, type='l')
+
+
+#validate normality by QQ plot or normality test
+qqnorm(m2$residuals)
+qqline(m2$residual,col=2)
+
+#Check whether residual is white noise or not
+# by ACF/PACF plot
+acf(m2$residual, plot=T, lag=20)
+pacf(m2$residual, plot=T, lag=20)
+
+
+#Check whether residual is white noise or not
+# by Ljung Box test
+# Test if residuals are white noise using the Ljung-Box test for m=6, 12, and 18
+Box.test(m1$resid, lag=6, type='Ljung')
+Box.test(m1$resid, lag=12, type='Ljung')
+Box.test(m1$resid, lag=18, type='Ljung')
+
+
+#13 COMPUTE PREDICTIONS
+x.fore = predict(m1, n.ahead=20)
+x.fore
+# plot the forecasts
+U = x.fore$pred + 2*x.fore$se
+L = x.fore$pred - 2*x.fore$se
+minx=min(ratechg,L)
+maxx=max(ratechg,U)
+ts.plot(ratechg, x.fore$pred,col=1:2, ylim=c(minx,maxx))
+lines(U, col="blue", lty="dashed")
+lines(L, col="blue", lty="dashed")
+
+
+-------------------------------------
+MA model
+
+take q=1
+OPTION 1: ARIMA() FUNCTION
+m1=arima(ratechg, order = c(0,0,1))
+m1 %to print summary of model
+tsdiag(m1)
+tsdiag(m1) creates residual plots.
+
+
+OPTION 2: ARMA() function
+m2=arma(ratechg, order = c(0,1))
+summary(m2) %to print summary of model
+plot(m2) % creates residual plots
+
+---------------------------------------------
+fitting ARMA(p,q) model
+
+OPTION 1: ARIMA() FUNCTION
+Fit ARMA(p,q) model
+m1=arima(time_object, order = c(2,0,1))
+m1 % to print summary of model
+tsdiag(m1)
+% tsdiag(model_name) creates residual plots.
+
+OPTION 2: ARMA() function
+m2=arma(drate, order = c(2,1))
+summary(m2) %to print summary of model
+plot(m2) % creates residual plots
+
+
+m1 = arima(drate, order=c(2,0,1))
+predict(m1,n.ahead=10, se.fit=T)
+
+
+##automatic calculations of p and q
+source("E:/Data Analytics/EACF.R")
+EACF(drate)
+
+therefore, p=1 q=2
+
+##The auto.arima() function in the forecastpackage selects the optimal ARMA(p,q) model according to the BIC or AIC criteria.
+auto.arima(drate, max.p= 6, max.q=6, stationary=TRUE,
+ic=c("aic"), stepwise=TRUE)
+
+---------------------------------------------
+final summary of time series analysis
+
+
+date = flight[,25]
+arrivaltime = flight[,18]
+
+creates time series object using zoo package
+library(zoo)
+ratets= zoo(x=arrivaltime, as.Date(as.character(flight$DATE), format = "%m/%d/%Y"))
+
+#3 COMPUTE SUMMARY STATISTICS
+basicStats(arrivaltime)
+
+
+#5 CREATE HISTOGRAM
+# creates 2 by 2 display for 4 plots
+par(mfcol=c(2,2))
+hist(arrivaltime, xlab="ARRIVAL_TIME", prob=TRUE, main="Histogram")
+# add approximating normal density curve
+xfit<-seq(min(arrivaltime),max(arrivaltime),length=40)
+yfit<-dnorm(xfit,mean=mean(arrivaltime),sd=sd(arrivaltime))
+lines(xfit, yfit, col="red", lwd=2)
+
+
+#6 CREATE NORMAL PROBABILITY PLOT
+qqnorm(arrivaltime)
+qqline(arrivaltime, col = 2)
+
+
+#7 CREATE TIME PLOT
+# use time series object lnattsto draw time plot indexed with time
+plot(ratets, type='l', xlab='time', ylab='ARRIVAL_TIME')
+
+
+#8 COMPUTE ACF and PACF AND PLOT CORRELOGRAM
+#prints acfto console
+acf(arrivaltime, plot=F, lag=20)
+# creates 2 by 1 display for 2 plots
+par(mfcol=c(2,1))
+#plots acf(correlogram)
+acf(arrivaltime, plot=T, lag=20)
+# plots pacfvalues up to lag 15.
+pacf(arrivaltime, lag = 15)
+
+
+#9 COMPUTE FIRST DIFFERENCE OF UNEMPLOYMENT RATES ---> not required since series is stationary
+drate= diff(arrivaltime)
+# time series object
+dratets=diff(ratets)
+
+#10 COMPUTE ACF and PACF AND PLOT CORRELOGRAM OF FIRST DIFFERENCE ---> not required since series is stationary
+plot(dratets, type='l', xlab='time', ylab='ARRIVAL_TIME')
+
+
+#10 COMPUTE LJUNG-BOX TEST FOR WHITE NOISE (NO AUTOCORRELATION)
+# to Lag 6
+Box.test(arrivaltime,lag=6,type='Ljung')
+# to Lag 12
+Box.test(arrivaltime,lag=12,type='Ljung')
+
+
+Fit a AR (2) Model----->29088.66
+m1= arima(arrivaltime, order=c(2,0,0), method='ML', include.mean=T)
+m1
+
+fit a MA(1)------->29368.1
+m3= arima(arrivaltime, order=c(0,0,1), method='ML', include.mean=T)
+m3
+
+	
+
+##residualanalysis: normal distribution or not
+JB test
+jarque.bera.test(m1$residual)
+
+
+##White noise or not
+Box.test(m1$residuals,lag=6,type='Ljung')
+Box.test(m1$residuals,lag=12,type='Ljung')
+
+------------------------
+
+#ARMA model, choosing p and q values 
+
+#solution1: plotting ACf and PACF
+#p = 2 and q  = 1
+
+m7= arima(arrivaltime, order=c(2,0,1), method='ML', include.mean=T)
+m7
+aic = 28811.84
+
+#residual analysis:
+jarque.bera.test(m7$residual)
+Box.test(m7$residuals,lag=6,type='Ljung')
+Box.test(m7$residuals,lag=12,type='Ljung')
+
+
+#solution2 : automatically by EACF.R
+
+source("E:/Data Analytics/EACF.R")
+EACF(arrivaltime)
+
+#p = 2, q = 2
+
+m8= arima(arrivaltime, order=c(2,0,2), method='ML', include.mean=T)
+m8
+aic = 28828.14
+#residual analysis:
+jarque.bera.test(m8$residual)
+Box.test(m8$residuals,lag=6,type='Ljung')
+Box.test(m8$residuals,lag=12,type='Ljung')
+Box.test(m8$residuals,lag=15,type='Ljung')
+
+
+#Solution3: by minimizing AIC/BIC
+auto.arima(arrivaltime, max.P=8, max.Q=8, ic="aic")
+auto.arima(arrivaltime, max.P=8, max.Q=8, ic="bic")
+aic = 28794.65
+
+
+------------------------------------
+
+##ARIMA model
+
+auto.arima(coredata(ratets))
+aic = 29477.47
+
+residual analysis:
+
+##predictions:
+##best model is from solution 3 ie ARMA(1,1,1) ie m9 having aic = 28794.65
+
+pr = predict(m9, n.ahead = 10, se.fit=T)
+pr
+
+
+###########################################
+on arrival delay
+ratets= zoo(x=arrivaldelay, as.Date(as.character(flight$DATE), format = "%m/%d/%Y"))
+
+
+solution2 : automatically by EACF.R
+
+source("E:/Data Analytics/EACF.R")
+EACF(arrivaldelay)
+
+p = 1 q = 1
+
+m1= arima(arrivaldelay, order=c(1,0,1), method='ML', include.mean=T)
+m1
+aic = 21120.14
+residual analysis:
+jarque.bera.test(m1$residual)
+Box.test(m1$residuals,lag=6,type='Ljung')
+Box.test(m1$residuals,lag=12,type='Ljung')
+Box.test(m1$residuals,lag=15,type='Ljung')
+
+Solution3: by minimizing AIC/BIC
+auto.arima(arrivaldelay, max.P=8, max.Q=8, ic="aic")
+auto.arima(arrivaldelay, max.P=8, max.Q=8, ic="bic")
+aic = 21115.69
+
+
+----------------------------------------------------------------
+
+
+ARIMA model
+auto.arima(coredata(ratets))
+aic = 21115.69
+
+> m2 = auto.arima(coredata(ratets))
+> m2
+> summary(m2)
+arrivaldelay.forecast = forecast(arrivaldelay, h=31)
+summary(arrivaldelay.forecast)
+plot(arrivaldelay.forecast)
+
+
+any of the above (solution 3 or ARIMA) is the best model having aic = 21115.69
+
+
+
+
+sid:
+arrivaltime.forecast = forecast(arrivaltime, h=31)
+
+summary(arrivaltime.forecast)
+
+plot(arrivaltime.forecast)
+--------------------------------------------------------------------------
+
+
+KNN
+
+gc = read.csv("C:/Users/vsawa/Desktop/finaldataprateek.csv", header = T)
+head(gc)
+
+
+SCHEDULED_DEPARTURE=gc$SCHEDULED_DEPARTURE
+carrier=gc$carrier
+DEPARTURE_TIME=gc$DEPARTURE_TIME
+dest=gc$dest
+distance=gc$distance
+DATE =gc$DATE
+flightnumb=gc$flightnumb
+origin=gc$origin
+weather=gc$weather
+dayweek=gc$dayweek
+daymonth=gc$daymonth
+tailnu=gc$tailnu
+delay=gc$delay
+delaytimeweathergood=gc$delaytimeweathergood
+delaytimeweatherbad=gc$delaytimeweatherbad
+DEPARTURE_DELAY=gc$DEPARTURE_DELAY
+SCHEDULED_TIME=gc$SCHEDULED_TIME
+ELAPSED_TIME=gc$ELAPSED_TIME
+AIR_TIME=gc$AIR_TIME
+SCHEDULED_ARRIVAL=gc$SCHEDULED_ARRIVAL
+ARRIVAL_TIME=gc$ARRIVAL_TIME
+ARRIVAL_DELAY=gc$ARRIVAL_DELAY
+delaytimeweatherbad=gc$delaytimeweatherbad
+delaytimeweathergood=gc$delaytimeweathergood
+YEAR=gc$YEAR
+MONTH=gc$MONTH
+DAY=gc$DAY
+
+gc$delay=recode(gc$delay, "delayed" = 1,"ontime"=0)
+table(gc$delay)
+
+
+
+## Convert the dependent varto factor. Normalize the numeric variables
+gc$delay<-factor(gc$delay)
+num.vars<-sapply(gc, is.numeric)
+gc[num.vars] <-lapply(gc[num.vars], scale)
+
+
+##selecting 4 numeric variables 
+myvars = c("SCHEDULED_DEPARTURE","DEPARTURE_TIME","SCHEDULED_ARRIVAL","ARRIVAL_TIME")
+gc.subset = gc[myvars]
+ 
+ 
+ training(80%) = 1761 and testing(20%) = 441 
+##prediction on the set of 2202 observations
+set.seed(123)
+test = 1:441 
+train.gc = gc.subset[-test,]
+test.gc = gc.subset[test,]
+ 
+ 
+ 
+train.def = gc$delay[-test]
+test.def = gc$delay[test]
+
+
+knn.1 <-knn(train.gc, test.gc, train.def, k=1)
+knn.5 <-knn(train.gc, test.gc, train.def, k=5)
+knn.20 <-knn(train.gc, test.gc, train.def, k=20)
+
+
+## Let's calculate the proportion of correct classification for k = 1, 5 & 20
+100 * sum(test.def == knn.1)/441 
+100 * sum(test.def == knn.5)/441 
+100 * sum(test.def == knn.20)/441 
+
+61.45125
+60.77098
+60.99773
+
+
+-------------------------------------------------
+
+##normalizing waala KNN
+
+gc = read.csv("C:/Users/vsawa/Desktop/finaldataprateek.csv", header = T)
+head(gc)
+
+
+SCHEDULED_DEPARTURE=gc$SCHEDULED_DEPARTURE
+carrier=gc$carrier
+DEPARTURE_TIME=gc$DEPARTURE_TIME
+dest=gc$dest
+distance=gc$distance
+DATE =gc$DATE
+flightnumb=gc$flightnumb
+origin=gc$origin
+weather=gc$weather
+dayweek=gc$dayweek
+daymonth=gc$daymonth
+tailnu=gc$tailnu
+delay=gc$delay
+delaytimeweathergood=gc$delaytimeweathergood
+delaytimeweatherbad=gc$delaytimeweatherbad
+DEPARTURE_DELAY=gc$DEPARTURE_DELAY
+SCHEDULED_TIME=gc$SCHEDULED_TIME
+ELAPSED_TIME=gc$ELAPSED_TIME
+AIR_TIME=gc$AIR_TIME
+SCHEDULED_ARRIVAL=gc$SCHEDULED_ARRIVAL
+ARRIVAL_TIME=gc$ARRIVAL_TIME
+ARRIVAL_DELAY=gc$ARRIVAL_DELAY
+delaytimeweatherbad=gc$delaytimeweatherbad
+delaytimeweathergood=gc$delaytimeweathergood
+YEAR=gc$YEAR
+MONTH=gc$MONTH
+DAY=gc$DAY
+
+gc$delay=recode(gc$delay, "delayed" = 1,"ontime"=0)
+table(gc$delay)
+
+normalize <- function(x) {return ((x - min(x)) / (max(x) - min(x))) }
+
+gc_n <- as.data.frame(lapply(gc[15:18], normalize))
+
+gc_train <- gc_n[1:1761,]
+gc_test <- gc_n[1762:2201,]
+gc_train_labels <- gc[1:1761, 14]
+gc_test_labels <- gc[1762:2201, 14]
+
+library(class)
+
+gc_test_pred <- knn(train = gc_train, test = gc_test,cl = gc_train_labels, k=3)-------55.90%
+gc_test_pred <- knn(train = gc_train, test = gc_test,cl = gc_train_labels, k=5)-------58.40%
+gc_test_pred <- knn(train = gc_train, test = gc_test,cl = gc_train_labels, k=20)------62.72%
+gc_test_pred <- knn(train = gc_train, test = gc_test,cl = gc_train_labels, k=21)------62.27%
+gc_test_pred <- knn(train = gc_train, test = gc_test,cl = gc_train_labels, k=10)------58.40%accuracy
+
+
+library(gmodels)
+CrossTable(x= gc_test_labels, y=gc_test_pred,prop.chisq=FALSE)
+
+
+
+----------------------------------------------------------------------------------------------------
+
+ANOVA
+anova = read.csv("C:/Users/vsawa/Desktop/ANOVA.csv", header = T)
+
+ARRIVAL_DELAY = anova$ARRIVAL_DELAY
+DELAY_LABEL = anova$DELAY_LABEL
+
+
+boxplot(ARRIVAL_DELAY~DELAY_LABEL,data=anova, main="DELAY ANALYSIS", xlab="DELAY_LABEL", ylab="ARRIVAL_DELAY")
+
+plot(ARRIVAL_DELAY~DELAY_LABEL)
+
+attach(anova)
+
+high = anova[which(DELAY_LABEL=='high'),]
+medium = anova[which(DELAY_LABEL=='medium'),]
+low = anova[which(DELAY_LABEL=='low'),]
+ontime = anova[which(DELAY_LABEL=='ontime'),]
+
+summary(high)
+summary(medium)
+summary(low)
+summary(ontime)
+
+
+anov = lm(ARRIVAL_DELAY~DELAY_LABEL)
+summary(anov)
+
+
+#plottting predicted vs residuals in Residual analysis
+res = rstandard(anov)
+plot(fitted(anov),res, main = "Predicted vs residuals plot")
+abline(a=0, b=0, col='red')
+
+
+
+
+#plotting predicted vs all X variables in residual analysis------------>of no use.
+plot(DELAY_LABEL, rstandard(anov), main="Predicted vs X variables")
+abline(a=0,b=0,col=2)
+
+qqnorm(rstandard(anov))
+qqline(rstandard(anov,col="red"))
+
+                                      -----------both the codes of QQ plot gives same output.
+
+#qqplot on best fitted model m2
+res = rstandard(anov)
+qqnorm(res)
+qqline(rstandard(anov),col='red')
+
+ANOVA INTREPRETATIONS:
+
+mu1 = average arrival delay for high delay group
+mu2 = average arrival delay for medium delay group
+mu3 = average arrival delay for low delay group
+mu4 = average arrival delay for on time group (no delay group)
+
+introducing 3 dummy variables
+X1 = 1 for low and X1 = 0 otherwise 
+X2 = 1 for medium and X2 = 0 otherwise
+X3 = 1 for on time and X3 = 0 otherwise
+
+y = beta0 + beta1 * x1 + beta2 * x2 +beta3 * x3 + e
+beta1 = mu2 - mu1
+beta2 = mu3 - mu1
+beta3 = mu4 - mu1
+
+group1 = (high delay) = X1 = X2 = X3 = 0 -----------> mu1 = beta0
+group2 = (low delay) = X1 = 1, X2 = X3 = 0 -----------> mu2 = beta0 + beta1
+group3 = (medium delay) = X1 = 0, X2 = 1, X3 = 0 -----------> mu3 = beta0 + beta2
+group4 = (ontime delay) = X1 = X2 = 0,X3 = 1 -----------> mu4 = beta0 + beta3
+
+
+from the F test, we get mu1 = 98.495
+mu2 = 6.599
+mu3 = 24.033
+mu4 = -13.43
+therefore, we reject null hypothesis and accept alternate hypothesis 
+
+---------------------------------------------------------------------------
+
+NBC
+
+
+library("caret")
+head(features)
+names(features)
+
+x = features[,-5]
+y = features$delay
+
+model = train(x,y,'nb',trControl=trainControl(method='cv',number=10))
+
+predict(model$finalModel,x)
+
+predict(model$finalModel,x)
+
+
+------------------------------------------------------------------------
+
+
+internetwala nbc ##install package klaR
+
+Train <- read.csv("C:/Users/vsawa/Desktop/train.csv",header = T)
+Test <- read.csv("C:/Users/vsawa/Desktop/test.csv",header = T)
+
+#Make sure the target variable is of a two-class classification problem only
+
+levels(Train$delay)
+
+model <- NaiveBayes(delay~SCHEDULED_DEPARTURE + DEPARTURE_TIME + SCHEDULED_ARRIVAL + ARRIVAL_TIME, data = Train)
+class(model) 
+pred <- predict(model,Test)
+table(pred)
+
+
+
+Train <- read.csv("C:/Users/vsawa/Desktop/train.csv",header = T)
+SCHEDULED_DEPARTURE = Train$SCHEDULED_DEPARTURE
+DEPARTURE_TIME = Train$DEPARTURE_TIME
+SCHEDULED_ARRIVAL = Train$SCHEDULED_ARRIVAL
+ARRIVAL_TIME = Train$ARRIVAL_TIME
+Test <- read.csv("C:/Users/vsawa/Desktop/test.csv",header = T)
+SCHEDULED_DEPARTURE = Test$SCHEDULED_DEPARTURE
+DEPARTURE_TIME = Test$DEPARTURE_TIME
+SCHEDULED_ARRIVAL = Test$SCHEDULED_ARRIVAL
+ARRIVAL_TIME = Test$ARRIVAL_TIME
+delay = Train$delay
+delay = Test$delay
